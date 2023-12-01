@@ -1,0 +1,117 @@
+---
+title: "Advent of Code 2023: Day 1"
+output: html_notebook
+---
+
+# Part One
+
+Start by loading in our data:
+
+```{r}
+#https://adventofcode.com/2023/day/1
+day1 <- read.table(file = paste0(getwd(), "/data/day1.txt"))
+```
+
+We want to concatenate the first- and last-observed numerics in each string to end up with a single number per row, then sum all those numbers together.
+
+Per the example, there's an edge case to consider: a row string may only contain a single numeric. Not a big deal.
+
+I'll start with the easiest (read: dumbest) solution I can think of:
+
+```{r}
+library(stringr) #for str_split function
+numbers <- sapply(day1$V1
+                  , FUN = function(x){
+  tmp <- suppressWarnings(stringr::str_split_1(x, "") %>%
+    as.numeric(.) %>% #force all vector elements to numeric
+    na.omit(.)) #drop all NAs
+  
+  #should be left with a vector of numerics now
+  #concatenate the first and last elements of tmp, 
+  #then force to numeric
+  as.numeric(paste0(tmp[1], tail(tmp,1)))
+}
+, USE.NAMES = FALSE)
+```
+
+Now we have a vector of numbers and sum them up:
+
+```{r}
+sum(numbers)
+```
+
+And this turned out to be the right answer. I'll likely come back later to see if I can come up with a more elegant solution.
+
+# Part Two
+
+Trickier! We could build a look-up table and search each row string for matches? Still need to account for order, which makes the string matching a bit more nuanced.
+
+```{r}
+written.nums <- c("one"
+                  , "two"
+                  , "three"
+                  , "four"
+                  , "five"
+                  , "six"
+                  , "seven"
+                  , "eight"
+                  , "nine")
+```
+
+Let's play with an example or two from the prompt. The second one here illustrates one of the hang-ups: some spelled-out numbers may share characters (e.g. `twone`)
+
+```{r}
+ex1 <- "two1nine"
+ex2 <- "xtwone3four"
+```
+
+Might be easiest to use `gsub`, although my solution will be clunky since I don't know regex:
+
+```{r}
+
+ex1.chk <- mapply(written.nums
+       , 1:9
+       , ex1
+       , FUN = function(x, y, z){
+         gsub(x,y,z)
+       }
+       , USE.NAMES = FALSE)
+
+ex1.chk
+```
+
+We end up with a string vector we could take advantage of: drop all elements that match the original string, then pluck the first and last elements from the remainder to obtain the string-to-numeric values for downstream use.
+
+```{r}
+ex1.chk[ex1.chk != ex1]
+```
+
+In this case there are only two elements; seems like we can use a recursion on these elements to further simplify things, stopping when the only elements that remain are identical:
+
+```{r}
+#define helper
+`%notin%` <- Negate(`%in%`)
+
+ex1.chk2 <- suppressWarnings(
+  mapply(written.nums
+         , 1:9
+         , ex1.chk[ex1.chk != ex1]
+         , FUN = function(x, y, z){
+           gsub(x,y,z)
+         }
+         , USE.NAMES = FALSE)
+)
+
+ex1.result <- ex1.chk2[ex1.chk2 %notin% ex1.chk[ex1.chk != ex1]]
+ex1.result[c(1, length(ex1.result))]
+
+```
+
+And from here we pluck the first and last characters from the remaining element, then concatenate.
+
+Let's try the other example:
+
+```{r}
+
+```
+
