@@ -1768,6 +1768,8 @@ string to end up with a single number per row, then sum all those
 numbers together.</p>
 <p>Per the example, there’s an edge case to consider: a row string may
 only contain a single numeric. Not a big deal.</p>
+<div id="proposed-solution" class="section level2">
+<h2>Proposed Solution</h2>
 <p>I’ll start with the easiest (read: dumbest) solution I can think
 of:</p>
 <!-- rnb-text-end -->
@@ -1800,8 +1802,9 @@ numbers &lt;- sapply(day1$V1
 <!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p>And this turned out to be the right answer. I’ll likely come back
-later to see if I can come up with a more elegant solution.</p>
+<p>And this turned out to be the right answer. I’ll likely come back to
+this one later to see if I can come up with a more elegant solution.</p>
+</div>
 </div>
 <div id="part-two" class="section level1">
 <h1>Part Two</h1>
@@ -1823,6 +1826,8 @@ matching a bit more nuanced.</p>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<div id="playing-with-the-problem" class="section level2">
+<h2>Playing with the Problem</h2>
 <p>Let’s play with an example or two from the prompt. The second one
 here illustrates one of the hang-ups: some spelled-out numbers may share
 characters (e.g. <code>twone</code>)</p>
@@ -1858,9 +1863,8 @@ ex1.chk</code></pre>
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>We end up with a string vector we could take advantage of: drop all
-elements that match the original string, then pluck the first and last
-elements from the remainder to obtain the string-to-numeric values for
-downstream use.</p>
+elements that match the original string, then pluck the modified string
+with the earliest deviation in “spelling” from the original string.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
 <!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZXgxLmNoa1tleDEuY2hrICE9IGV4MV1cbmBgYCJ9 -->
@@ -1871,44 +1875,375 @@ downstream use.</p>
 <!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p>In this case there are only two elements; seems like we can use a
-recursion on these elements to further simplify things, stopping when
-the only elements that remain are identical:</p>
+<p>In this case we’d pluck the first vector element, then pass over the
+string and determine whether there’s some last-observed word that needs
+replacing with its numeric symbol.</p>
+</div>
+<div id="proposed-solution-1" class="section level2">
+<h2>Proposed Solution</h2>
+<p>Let’s implement this approach in some defined functions and then test
+it on the example vector of strings from the part two problem
+statement:</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI2RlZmluZSBoZWxwZXJcbmAlbm90aW4lYCA8LSBOZWdhdGUoYCVpbiVgKVxuXG5leDEuY2hrMiA8LSBzdXBwcmVzc1dhcm5pbmdzKFxuICBtYXBwbHkod3JpdHRlbi5udW1zXG4gICAgICAgICAsIDE6OVxuICAgICAgICAgLCBleDEuY2hrW2V4MS5jaGsgIT0gZXgxXVxuICAgICAgICAgLCBGVU4gPSBmdW5jdGlvbih4LCB5LCB6KXtcbiAgICAgICAgICAgZ3N1Yih4LHkseilcbiAgICAgICAgIH1cbiAgICAgICAgICwgVVNFLk5BTUVTID0gRkFMU0UpXG4pXG5cbmV4MS5yZXN1bHQgPC0gZXgxLmNoazJbZXgxLmNoazIgJW5vdGluJSBleDEuY2hrW2V4MS5jaGsgIT0gZXgxXV1cbmV4MS5yZXN1bHRbYygxLCBsZW5ndGgoZXgxLnJlc3VsdCkpXVxuYGBgIn0= -->
-<pre class="r"><code>#define helper
-`%notin%` &lt;- Negate(`%in%`)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY2hlY2tORXh0cmFjdCA8LSBmdW5jdGlvbihzdHJuZy52ZWMsIG9yaWcuc3Rybmcpe1xuICBicm93c2VyKClcbiAgaWYgKGxlbmd0aCh1bmlxdWUoc3RybmcudmVjKSkgPT0gMSl7XG4gICAgI25vdGhpbmcgbW9yZSB0byBkb1xuICAgIHVuaXF1ZShzdHJuZy52ZWMpXG4gIH0gZWxzZSB7XG4gICAgI2Ryb3AgYW55IHN0cm5ncyB0aGF0IGRpZG4ndCBjaGFuZ2UgZnJvbSB0aGUgbGFzdCBpdGVyYXRpb25cbiAgICBzdHJuZy52ZWMgPC0gc3VwcHJlc3NXYXJuaW5ncyhcbiAgICAgIHN0cm5nLnZlY1tzdHJuZy52ZWMgJW5vdGluJSBvcmlnLnN0cm5nXVxuICAgIClcbiAgICBcbiAgICBpZiAobGVuZ3RoKHVuaXF1ZShzdHJuZy52ZWMpKSA9PSAxKXtcbiAgICAgIHVuaXF1ZShzdHJuZy52ZWMpXG4gICAgfSBlbHNlIHtcbiAgICAgICNjb21wYXJlIGVhY2ggY2hhciBpbiBlYWNoIG1vZGlmaWVkIHN0cmluZyB2cyBlYWNoIGNoYXIgaW4gdGhlIG9yaWdpbmFsIHN0cmluZyBhbmQgZ2V0IHRoZSBwb3NpdGlvbnMgb2YgY2hhcnMgdGhhdCBtYXRjaFxuICAgICAgdG1wIDwtIHNhcHBseShzdHJuZy52ZWNcbiAgICAgICAgICAgICAgICAgICAgLCBGVU4gPSBmdW5jdGlvbih4KSB7XG4gICAgICAgICAgICAgICAgICAgICAgbWF0Y2goXG4gICAgICAgICAgICAgICAgICAgICAgICBzdHJfc3BsaXQoeCwgXCJcIiwgc2ltcGxpZnkgPSBUUlVFKVxuICAgICAgICAgICAgICAgICAgICAgICAgLHN0cl9zcGxpdChvcmlnLnN0cm5nLCBcIlwiLCBzaW1wbGlmeSA9IFRSVUUpKVxuICAgICAgICAgICAgICAgICAgICB9XG4gICAgICAgICAgICAgICAgICAgICwgc2ltcGxpZnkgPSBGQUxTRVxuICAgICAgKVxuXG4gICAgICAjZmluZCB0aGUgbW9kaWZpZWQgc3RyaW5nIHdpdGggdGhlIGVhcmxpZXN0L2xhdGVzdCBhcHBlYXJpbmcgbm9uLW1hdGNoaW5nIGNoYXIgYW1vbmcgYWxsIG1vZGlmaWVkIHN0cmluZ3NcbiAgICAgIHVuaXF1ZShcbiAgICAgICAgYyhzdHJuZy52ZWNbd2hpY2gubWluKGxhcHBseSh0bXAsIGZ1bmN0aW9uKHgpIHtcbiAgICAgICAgICBzdXBwcmVzc1dhcm5pbmdzKG1pbih3aGljaChpcy5uYSh4KSkpKVxuICAgICAgICB9KSldXG4gICAgICAgICwgc3RybmcudmVjW3doaWNoLm1heChsYXBwbHkodG1wLCBmdW5jdGlvbih4KSB7XG4gICAgICAgICAgc3VwcHJlc3NXYXJuaW5ncyhtYXgod2hpY2goaXMubmEoeCkpKSlcbiAgICAgICAgfSkpXVxuICAgICAgICApXG4gICAgICApXG5cbiAgICB9XG4gIH1cbiAgXG59XG5cbnN0cm5nUmVwbGFjZVJlY3VycyA8LSBmdW5jdGlvbihzdHJuZyl7XG5cbiAgdG1wIDwtIGNoZWNrTkV4dHJhY3QoaW5pdGlhbFJlcGxhY2Uoc3RybmcpXG4gICAgICAgICAgICAgICAgICAgICAgICwgc3RybmcpXG4gIGJyb3dzZXIoKVxuICBpZiAoYW55KGlzLm5hKHRtcCkpKXtcbiAgICBicm93c2VyKClcbiAgICAjY2hlY2tORXh0cmFjdCByZXR1cm5zIE5BIGlmIHN0cm5nIGhhcyBubyBzcGVsbGVkLW91dCBudW1iZXJzXG4gICAgc3RybmdcbiAgfSBlbHNlIHtcbiAgICB3aGlsZShsZW5ndGgodW5pcXVlKHRtcCkpID4gMSB8ICFzZXRlcXVhbCh0bXAsIHVuaXF1ZShpbml0aWFsUmVwbGFjZSh0bXApKSkpe1xuICAgICAgI2NvbnRpbnVlIGF0dGVtcHRpbmcgdG8gcmVwbGFjZSBpZiB0aGVyZSBhcmUgdG9vIG1hbnkgc3RyaW5nc1xuICAgICAgI29yIGlmIHRoZSBzb2xlIHN0cmluZyBjYW4gc3RpbGwgYmUgbW9kaWZpZWRcbiAgICAgIHRtcCA8LSBjaGVja05FeHRyYWN0KGluaXRpYWxSZXBsYWNlKHRtcClcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICwgdG1wKVxuICAgIH1cbiAgICB1bmlxdWUodG1wKVxuICB9XG59XG5cbmV4Mi5yZXN1bHQgPC0gc3RybmdSZXBsYWNlUmVjdXJzKGV4MilcblxuYGBgIn0= -->
+<pre class="r"><code>checkNExtract &lt;- function(strng.vec, orig.strng){
+  browser()
+  if (length(unique(strng.vec)) == 1){
+    #nothing more to do
+    unique(strng.vec)
+  } else {
+    #drop any strngs that didn&#39;t change from the last iteration
+    strng.vec &lt;- suppressWarnings(
+      strng.vec[strng.vec %notin% orig.strng]
+    )
+    
+    if (length(unique(strng.vec)) == 1){
+      unique(strng.vec)
+    } else {
+      #compare each char in each modified string vs each char in the original string and get the positions of chars that match
+      tmp &lt;- sapply(strng.vec
+                    , FUN = function(x) {
+                      match(
+                        str_split(x, &quot;&quot;, simplify = TRUE)
+                        ,str_split(orig.strng, &quot;&quot;, simplify = TRUE))
+                    }
+                    , simplify = FALSE
+      )
 
-ex1.chk2 &lt;- suppressWarnings(
-  mapply(written.nums
-         , 1:9
-         , ex1.chk[ex1.chk != ex1]
-         , FUN = function(x, y, z){
-           gsub(x,y,z)
-         }
-         , USE.NAMES = FALSE)
-)
+      #find the modified string with the earliest/latest appearing non-matching char among all modified strings
+      unique(
+        c(strng.vec[which.min(lapply(tmp, function(x) {
+          suppressWarnings(min(which(is.na(x))))
+        }))]
+        , strng.vec[which.max(lapply(tmp, function(x) {
+          suppressWarnings(max(which(is.na(x))))
+        }))]
+        )
+      )
 
-ex1.result &lt;- ex1.chk2[ex1.chk2 %notin% ex1.chk[ex1.chk != ex1]]
-ex1.result[c(1, length(ex1.result))]</code></pre>
+    }
+  }
+  
+}
+
+strngReplaceRecurs &lt;- function(strng){
+
+  tmp &lt;- checkNExtract(initialReplace(strng)
+                       , strng)
+  browser()
+  if (any(is.na(tmp))){
+    browser()
+    #checkNExtract returns NA if strng has no spelled-out numbers
+    strng
+  } else {
+    while(length(unique(tmp)) &gt; 1 | !setequal(tmp, unique(initialReplace(tmp)))){
+      #continue attempting to replace if there are too many strings
+      #or if the sole string can still be modified
+      tmp &lt;- checkNExtract(initialReplace(tmp)
+                           , tmp)
+    }
+    unique(tmp)
+  }
+}
+
+ex2.result &lt;- strngReplaceRecurs(ex2)
+</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIFwiMjE5XCIgXCIyMTlcIlxuIn0= -->
-<pre><code>[1] &quot;219&quot; &quot;219&quot;</code></pre>
+<!-- rnb-output-begin eyJkYXRhIjoiQ2FsbGVkIGZyb206IGNoZWNrTkV4dHJhY3QoaW5pdGlhbFJlcGxhY2Uoc3RybmcpLCBzdHJuZylcbmRlYnVnIGF0ICMzOiBpZiAobGVuZ3RoKHVuaXF1ZShzdHJuZy52ZWMpKSA9PSAxKSB7XG4gICAgdW5pcXVlKHN0cm5nLnZlYylcbn0gZWxzZSB7XG4gICAgc3RybmcudmVjIDwtIHN1cHByZXNzV2FybmluZ3Moc3RybmcudmVjW3N0cm5nLnZlYyAlbm90aW4lIFxuICAgICAgICBvcmlnLnN0cm5nXSlcbiAgICBpZiAobGVuZ3RoKHVuaXF1ZShzdHJuZy52ZWMpKSA9PSAxKSB7XG4gICAgICAgIHVuaXF1ZShzdHJuZy52ZWMpXG4gICAgfVxuICAgIGVsc2Uge1xuICAgICAgICB0bXAgPC0gc2FwcGx5KHN0cm5nLnZlYywgRlVOID0gZnVuY3Rpb24oeCkge1xuICAgICAgICAgICAgbWF0Y2goc3RyX3NwbGl0KHgsIFwiXCIsIHNpbXBsaWZ5ID0gVFJVRSksIHN0cl9zcGxpdChvcmlnLnN0cm5nLCBcbiAgICAgICAgICAgICAgICBcIlwiLCBzaW1wbGlmeSA9IFRSVUUpKVxuICAgICAgICB9LCBzaW1wbGlmeSA9IEZBTFNFKVxuICAgICAgICB1bmlxdWUoYyhzdHJuZy52ZWNbd2hpY2gubWluKGxhcHBseSh0bXAsIGZ1bmN0aW9uKHgpIHtcbiAgICAgICAgICAgIHN1cHByZXNzV2FybmluZ3MobWluKHdoaWNoKGlzLm5hKHgpKSkpXG4gICAgICAgIH0pKV0sIHN0cm5nLnZlY1t3aGljaC5tYXgobGFwcGx5KHRtcCwgZnVuY3Rpb24oeCkge1xuICAgICAgICAgICAgc3VwcHJlc3NXYXJuaW5ncyhtYXgod2hpY2goaXMubmEoeCkpKSlcbiAgICAgICAgfSkpXSkpXG4gICAgfVxufVxuZGVidWcgYXQgIzg6IHN0cm5nLnZlYyA8LSBzdXBwcmVzc1dhcm5pbmdzKHN0cm5nLnZlY1tzdHJuZy52ZWMgJW5vdGluJSBvcmlnLnN0cm5nXSlcbmRlYnVnIGF0ICMxMjogaWYgKGxlbmd0aCh1bmlxdWUoc3RybmcudmVjKSkgPT0gMSkge1xuICAgIHVuaXF1ZShzdHJuZy52ZWMpXG59IGVsc2Uge1xuICAgIHRtcCA8LSBzYXBwbHkoc3RybmcudmVjLCBGVU4gPSBmdW5jdGlvbih4KSB7XG4gICAgICAgIG1hdGNoKHN0cl9zcGxpdCh4LCBcIlwiLCBzaW1wbGlmeSA9IFRSVUUpLCBzdHJfc3BsaXQob3JpZy5zdHJuZywgXG4gICAgICAgICAgICBcIlwiLCBzaW1wbGlmeSA9IFRSVUUpKVxuICAgIH0sIHNpbXBsaWZ5ID0gRkFMU0UpXG4gICAgdW5pcXVlKGMoc3RybmcudmVjW3doaWNoLm1pbihsYXBwbHkodG1wLCBmdW5jdGlvbih4KSB7XG4gICAgICAgIHN1cHByZXNzV2FybmluZ3MobWluKHdoaWNoKGlzLm5hKHgpKSkpXG4gICAgfSkpXSwgc3RybmcudmVjW3doaWNoLm1heChsYXBwbHkodG1wLCBmdW5jdGlvbih4KSB7XG4gICAgICAgIHN1cHByZXNzV2FybmluZ3MobWF4KHdoaWNoKGlzLm5hKHgpKSkpXG4gICAgfSkpXSkpXG59XG5kZWJ1ZyBhdCAjMTY6IHRtcCA8LSBzYXBwbHkoc3RybmcudmVjLCBGVU4gPSBmdW5jdGlvbih4KSB7XG4gICAgbWF0Y2goc3RyX3NwbGl0KHgsIFwiXCIsIHNpbXBsaWZ5ID0gVFJVRSksIHN0cl9zcGxpdChvcmlnLnN0cm5nLCBcbiAgICAgICAgXCJcIiwgc2ltcGxpZnkgPSBUUlVFKSlcbn0sIHNpbXBsaWZ5ID0gRkFMU0UpXG5kZWJ1ZyBhdCAjMjY6IHVuaXF1ZShjKHN0cm5nLnZlY1t3aGljaC5taW4obGFwcGx5KHRtcCwgZnVuY3Rpb24oeCkge1xuICAgIHN1cHByZXNzV2FybmluZ3MobWluKHdoaWNoKGlzLm5hKHgpKSkpXG59KSldLCBzdHJuZy52ZWNbd2hpY2gubWF4KGxhcHBseSh0bXAsIGZ1bmN0aW9uKHgpIHtcbiAgICBzdXBwcmVzc1dhcm5pbmdzKG1heCh3aGljaChpcy5uYSh4KSkpKVxufSkpXSkpXG5DYWxsZWQgZnJvbTogc3RybmdSZXBsYWNlUmVjdXJzKGV4MilcbmRlYnVnIGF0ICM2OiBpZiAoYW55KGlzLm5hKHRtcCkpKSB7XG4gICAgYnJvd3NlcigpXG4gICAgc3Rybmdcbn0gZWxzZSB7XG4gICAgd2hpbGUgKGxlbmd0aCh1bmlxdWUodG1wKSkgPiAxIHwgIXNldGVxdWFsKHRtcCwgdW5pcXVlKGluaXRpYWxSZXBsYWNlKHRtcCkpKSkge1xuICAgICAgICB0bXAgPC0gY2hlY2tORXh0cmFjdChpbml0aWFsUmVwbGFjZSh0bXApLCB0bXApXG4gICAgfVxuICAgIHVuaXF1ZSh0bXApXG59XG5kZWJ1ZyBhdCAjMTE6IHdoaWxlIChsZW5ndGgodW5pcXVlKHRtcCkpID4gMSB8ICFzZXRlcXVhbCh0bXAsIHVuaXF1ZShpbml0aWFsUmVwbGFjZSh0bXApKSkpIHtcbiAgICB0bXAgPC0gY2hlY2tORXh0cmFjdChpbml0aWFsUmVwbGFjZSh0bXApLCB0bXApXG59XG5kZWJ1ZyBhdCAjMTQ6IHRtcCA8LSBjaGVja05FeHRyYWN0KGluaXRpYWxSZXBsYWNlKHRtcCksIHRtcClcbkNhbGxlZCBmcm9tOiBjaGVja05FeHRyYWN0KGluaXRpYWxSZXBsYWNlKHRtcCksIHRtcClcbmRlYnVnIGF0ICMzOiBpZiAobGVuZ3RoKHVuaXF1ZShzdHJuZy52ZWMpKSA9PSAxKSB7XG4gICAgdW5pcXVlKHN0cm5nLnZlYylcbn0gZWxzZSB7XG4gICAgc3RybmcudmVjIDwtIHN1cHByZXNzV2FybmluZ3Moc3RybmcudmVjW3N0cm5nLnZlYyAlbm90aW4lIFxuICAgICAgICBvcmlnLnN0cm5nXSlcbiAgICBpZiAobGVuZ3RoKHVuaXF1ZShzdHJuZy52ZWMpKSA9PSAxKSB7XG4gICAgICAgIHVuaXF1ZShzdHJuZy52ZWMpXG4gICAgfVxuICAgIGVsc2Uge1xuICAgICAgICB0bXAgPC0gc2FwcGx5KHN0cm5nLnZlYywgRlVOID0gZnVuY3Rpb24oeCkge1xuICAgICAgICAgICAgbWF0Y2goc3RyX3NwbGl0KHgsIFwiXCIsIHNpbXBsaWZ5ID0gVFJVRSksIHN0cl9zcGxpdChvcmlnLnN0cm5nLCBcbiAgICAgICAgICAgICAgICBcIlwiLCBzaW1wbGlmeSA9IFRSVUUpKVxuICAgICAgICB9LCBzaW1wbGlmeSA9IEZBTFNFKVxuICAgICAgICB1bmlxdWUoYyhzdHJuZy52ZWNbd2hpY2gubWluKGxhcHBseSh0bXAsIGZ1bmN0aW9uKHgpIHtcbiAgICAgICAgICAgIHN1cHByZXNzV2FybmluZ3MobWluKHdoaWNoKGlzLm5hKHgpKSkpXG4gICAgICAgIH0pKV0sIHN0cm5nLnZlY1t3aGljaC5tYXgobGFwcGx5KHRtcCwgZnVuY3Rpb24oeCkge1xuICAgICAgICAgICAgc3VwcHJlc3NXYXJuaW5ncyhtYXgod2hpY2goaXMubmEoeCkpKSlcbiAgICAgICAgfSkpXSkpXG4gICAgfVxufVxuZGVidWcgYXQgIzg6IHN0cm5nLnZlYyA8LSBzdXBwcmVzc1dhcm5pbmdzKHN0cm5nLnZlY1tzdHJuZy52ZWMgJW5vdGluJSBvcmlnLnN0cm5nXSlcbmRlYnVnIGF0ICMxMjogaWYgKGxlbmd0aCh1bmlxdWUoc3RybmcudmVjKSkgPT0gMSkge1xuICAgIHVuaXF1ZShzdHJuZy52ZWMpXG59IGVsc2Uge1xuICAgIHRtcCA8LSBzYXBwbHkoc3RybmcudmVjLCBGVU4gPSBmdW5jdGlvbih4KSB7XG4gICAgICAgIG1hdGNoKHN0cl9zcGxpdCh4LCBcIlwiLCBzaW1wbGlmeSA9IFRSVUUpLCBzdHJfc3BsaXQob3JpZy5zdHJuZywgXG4gICAgICAgICAgICBcIlwiLCBzaW1wbGlmeSA9IFRSVUUpKVxuICAgIH0sIHNpbXBsaWZ5ID0gRkFMU0UpXG4gICAgdW5pcXVlKGMoc3RybmcudmVjW3doaWNoLm1pbihsYXBwbHkodG1wLCBmdW5jdGlvbih4KSB7XG4gICAgICAgIHN1cHByZXNzV2FybmluZ3MobWluKHdoaWNoKGlzLm5hKHgpKSkpXG4gICAgfSkpXSwgc3RybmcudmVjW3doaWNoLm1heChsYXBwbHkodG1wLCBmdW5jdGlvbih4KSB7XG4gICAgICAgIHN1cHByZXNzV2FybmluZ3MobWF4KHdoaWNoKGlzLm5hKHgpKSkpXG4gICAgfSkpXSkpXG59XG5kZWJ1ZyBhdCAjMTY6IHRtcCA8LSBzYXBwbHkoc3RybmcudmVjLCBGVU4gPSBmdW5jdGlvbih4KSB7XG4gICAgbWF0Y2goc3RyX3NwbGl0KHgsIFwiXCIsIHNpbXBsaWZ5ID0gVFJVRSksIHN0cl9zcGxpdChvcmlnLnN0cm5nLCBcbiAgICAgICAgXCJcIiwgc2ltcGxpZnkgPSBUUlVFKSlcbn0sIHNpbXBsaWZ5ID0gRkFMU0UpXG5kZWJ1ZyBhdCAjMjY6IHVuaXF1ZShjKHN0cm5nLnZlY1t3aGljaC5taW4obGFwcGx5KHRtcCwgZnVuY3Rpb24oeCkge1xuICAgIHN1cHByZXNzV2FybmluZ3MobWluKHdoaWNoKGlzLm5hKHgpKSkpXG59KSldLCBzdHJuZy52ZWNbd2hpY2gubWF4KGxhcHBseSh0bXAsIGZ1bmN0aW9uKHgpIHtcbiAgICBzdXBwcmVzc1dhcm5pbmdzKG1heCh3aGljaChpcy5uYSh4KSkpKVxufSkpXSkpXG5kZWJ1ZyBhdCAjMTE6ICh3aGlsZSkgbGVuZ3RoKHVuaXF1ZSh0bXApKSA+IDEgfCAhc2V0ZXF1YWwodG1wLCB1bmlxdWUoaW5pdGlhbFJlcGxhY2UodG1wKSkpXG5kZWJ1ZyBhdCAjMTc6IHVuaXF1ZSh0bXApXG4ifQ== -->
+<pre><code>Called from: checkNExtract(initialReplace(strng), strng)
+debug at #3: if (length(unique(strng.vec)) == 1) {
+    unique(strng.vec)
+} else {
+    strng.vec &lt;- suppressWarnings(strng.vec[strng.vec %notin% 
+        orig.strng])
+    if (length(unique(strng.vec)) == 1) {
+        unique(strng.vec)
+    }
+    else {
+        tmp &lt;- sapply(strng.vec, FUN = function(x) {
+            match(str_split(x, &quot;&quot;, simplify = TRUE), str_split(orig.strng, 
+                &quot;&quot;, simplify = TRUE))
+        }, simplify = FALSE)
+        unique(c(strng.vec[which.min(lapply(tmp, function(x) {
+            suppressWarnings(min(which(is.na(x))))
+        }))], strng.vec[which.max(lapply(tmp, function(x) {
+            suppressWarnings(max(which(is.na(x))))
+        }))]))
+    }
+}
+debug at #8: strng.vec &lt;- suppressWarnings(strng.vec[strng.vec %notin% orig.strng])
+debug at #12: if (length(unique(strng.vec)) == 1) {
+    unique(strng.vec)
+} else {
+    tmp &lt;- sapply(strng.vec, FUN = function(x) {
+        match(str_split(x, &quot;&quot;, simplify = TRUE), str_split(orig.strng, 
+            &quot;&quot;, simplify = TRUE))
+    }, simplify = FALSE)
+    unique(c(strng.vec[which.min(lapply(tmp, function(x) {
+        suppressWarnings(min(which(is.na(x))))
+    }))], strng.vec[which.max(lapply(tmp, function(x) {
+        suppressWarnings(max(which(is.na(x))))
+    }))]))
+}
+debug at #16: tmp &lt;- sapply(strng.vec, FUN = function(x) {
+    match(str_split(x, &quot;&quot;, simplify = TRUE), str_split(orig.strng, 
+        &quot;&quot;, simplify = TRUE))
+}, simplify = FALSE)
+debug at #26: unique(c(strng.vec[which.min(lapply(tmp, function(x) {
+    suppressWarnings(min(which(is.na(x))))
+}))], strng.vec[which.max(lapply(tmp, function(x) {
+    suppressWarnings(max(which(is.na(x))))
+}))]))
+Called from: strngReplaceRecurs(ex2)
+debug at #6: if (any(is.na(tmp))) {
+    browser()
+    strng
+} else {
+    while (length(unique(tmp)) &gt; 1 | !setequal(tmp, unique(initialReplace(tmp)))) {
+        tmp &lt;- checkNExtract(initialReplace(tmp), tmp)
+    }
+    unique(tmp)
+}
+debug at #11: while (length(unique(tmp)) &gt; 1 | !setequal(tmp, unique(initialReplace(tmp)))) {
+    tmp &lt;- checkNExtract(initialReplace(tmp), tmp)
+}
+debug at #14: tmp &lt;- checkNExtract(initialReplace(tmp), tmp)
+Called from: checkNExtract(initialReplace(tmp), tmp)
+debug at #3: if (length(unique(strng.vec)) == 1) {
+    unique(strng.vec)
+} else {
+    strng.vec &lt;- suppressWarnings(strng.vec[strng.vec %notin% 
+        orig.strng])
+    if (length(unique(strng.vec)) == 1) {
+        unique(strng.vec)
+    }
+    else {
+        tmp &lt;- sapply(strng.vec, FUN = function(x) {
+            match(str_split(x, &quot;&quot;, simplify = TRUE), str_split(orig.strng, 
+                &quot;&quot;, simplify = TRUE))
+        }, simplify = FALSE)
+        unique(c(strng.vec[which.min(lapply(tmp, function(x) {
+            suppressWarnings(min(which(is.na(x))))
+        }))], strng.vec[which.max(lapply(tmp, function(x) {
+            suppressWarnings(max(which(is.na(x))))
+        }))]))
+    }
+}
+debug at #8: strng.vec &lt;- suppressWarnings(strng.vec[strng.vec %notin% orig.strng])
+debug at #12: if (length(unique(strng.vec)) == 1) {
+    unique(strng.vec)
+} else {
+    tmp &lt;- sapply(strng.vec, FUN = function(x) {
+        match(str_split(x, &quot;&quot;, simplify = TRUE), str_split(orig.strng, 
+            &quot;&quot;, simplify = TRUE))
+    }, simplify = FALSE)
+    unique(c(strng.vec[which.min(lapply(tmp, function(x) {
+        suppressWarnings(min(which(is.na(x))))
+    }))], strng.vec[which.max(lapply(tmp, function(x) {
+        suppressWarnings(max(which(is.na(x))))
+    }))]))
+}
+debug at #16: tmp &lt;- sapply(strng.vec, FUN = function(x) {
+    match(str_split(x, &quot;&quot;, simplify = TRUE), str_split(orig.strng, 
+        &quot;&quot;, simplify = TRUE))
+}, simplify = FALSE)
+debug at #26: unique(c(strng.vec[which.min(lapply(tmp, function(x) {
+    suppressWarnings(min(which(is.na(x))))
+}))], strng.vec[which.max(lapply(tmp, function(x) {
+    suppressWarnings(max(which(is.na(x))))
+}))]))
+debug at #11: (while) length(unique(tmp)) &gt; 1 | !setequal(tmp, unique(initialReplace(tmp)))
+debug at #17: unique(tmp)</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZXgyLnJlc3VsdFxuYGBgIn0= -->
+<pre class="r"><code>ex2.result</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIFwieHR3MTM0XCJcbiJ9 -->
+<pre><code>[1] &quot;xtw134&quot;</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgXG5gYGAifQ== -->
+<pre class="r"><code></code></pre>
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-output-begin eyJkYXRhIjoiRXJyb3I6IGF0dGVtcHQgdG8gdXNlIHplcm8tbGVuZ3RoIHZhcmlhYmxlIG5hbWVcbiJ9 --&gt;
+</code></pre>
+<p>Error: attempt to use zero-length variable name</p>
+<pre><code>
+
+
+&lt;!-- rnb-output-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+Let&#39;s also define a function to handle the integer-search routine from before.
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubnVtYmVyU2VhcmNoIDwtIGZ1bmN0aW9uKHN0cmluZy52ZWMpe1xuICBpZiAoYW55KGlzLm5hKHN0cmluZy52ZWMpKSkgYnJvd3NlcigpXG4gIHNhcHBseShzdHJpbmcudmVjXG4gICAgICAgICAsIEZVTiA9IGZ1bmN0aW9uKHgpe1xuICAgICAgICAgICB0bXAgPC0gc3VwcHJlc3NXYXJuaW5ncyhzdHJpbmdyOjpzdHJfc3BsaXRfMSh4LCBcIlwiKSAlPiVcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBhcy5udW1lcmljKC4pICU+JSAjZm9yY2UgYWxsIHZlY3RvciBlbGVtZW50cyB0byBudW1lcmljXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgbmEub21pdCguKSkgI2Ryb3AgYWxsIE5Bc1xuICAgICAgICAgICBcbiAgICAgICAgICAgI3Nob3VsZCBiZSBsZWZ0IHdpdGggYSB2ZWN0b3Igb2YgbnVtZXJpY3Mgbm93XG4gICAgICAgICAgICNjb25jYXRlbmF0ZSB0aGUgZmlyc3QgYW5kIGxhc3QgZWxlbWVudHMgb2YgdG1wLCBcbiAgICAgICAgICAgI3RoZW4gZm9yY2UgdG8gbnVtZXJpY1xuICAgICAgICAgICBhcy5udW1lcmljKHBhc3RlMCh0bXBbMV0sIHRhaWwodG1wLDEpKSlcbiAgICAgICAgIH1cbiAgKVxufVxuYGBgIn0= --&gt;
+
+```r
+numberSearch &lt;- function(string.vec){
+  if (any(is.na(string.vec))) browser()
+  sapply(string.vec
+         , FUN = function(x){
+           tmp &lt;- suppressWarnings(stringr::str_split_1(x, &quot;&quot;) %&gt;%
+                                     as.numeric(.) %&gt;% #force all vector elements to numeric
+                                     na.omit(.)) #drop all NAs
+           
+           #should be left with a vector of numerics now
+           #concatenate the first and last elements of tmp, 
+           #then force to numeric
+           as.numeric(paste0(tmp[1], tail(tmp,1)))
+         }
+  )
+}</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Next test these functions on the example data, since we know what the
+result should be:</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF5MS50ZXN0IDwtIHJlYWQudGFibGUoZmlsZSA9IHBhc3RlMChnZXR3ZCgpLCBcIi9kYXRhL2RheTFfc2FtcGxlLnR4dFwiKSlcblxuZGF5MS50ZXN0LnN0ciA8LSBzYXBwbHkoZGF5MS50ZXN0JFYxXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAsIGJhdGNoUmVwbGFjZVxuICAgICAgICAgICAgICAgICAgICAgICAgICAgLCBVU0UuTkFNRVMgPSBUUlVFKVxuXG5zdW0obnVtYmVyU2VhcmNoKHVubGlzdChkYXkxLnRlc3Quc3RyKSkpXG5gYGAifQ== -->
+<pre class="r"><code>day1.test &lt;- read.table(file = paste0(getwd(), &quot;/data/day1_sample.txt&quot;))
+
+day1.test.str &lt;- sapply(day1.test$V1
+                           , batchReplace
+                           , USE.NAMES = TRUE)
+
+sum(numberSearch(unlist(day1.test.str)))</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Looks like we’re in good shape. Now let’s run these functions on the
+full dataset:</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jc3RyaW5nLWFuZC1yZXBsYWNlIGZpcnN0XG5kYXkxLnN0ci5yZXBsYWNlIDwtIHNhcHBseShkYXkxJFYxXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAsIGJhdGNoUmVwbGFjZVxuICAgICAgICAgICAgICAgICAgICAgICAgICAgLCBVU0UuTkFNRVMgPSBUUlVFKVxuXG4jbnVtYmVyIHNlYXJjaCBzZWNvbmRcbmRheTEuZmluYWwucHQyIDwtIG51bWJlclNlYXJjaCh1bmxpc3QoZGF5MS5zdHIucmVwbGFjZSkpXG5cbnN1bShkYXkxLmZpbmFsLnB0MilcbmBgYCJ9 -->
+<pre class="r"><code>
+#string-and-replace first
+day1.str.replace &lt;- sapply(day1$V1
+                           , batchReplace
+                           , USE.NAMES = TRUE)
+
+#number search second
+day1.final.pt2 &lt;- numberSearch(unlist(day1.str.replace))
+
+sum(day1.final.pt2)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDU2MzEwXG4ifQ== -->
+<pre><code>[1] 56310</code></pre>
 <!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p>And from here we pluck the first and last characters from the
-remaining element, then concatenate.</p>
-<p>Let’s try the other example:</p>
+<p>Turns out this answer is wrong! There are some strings where words
+share a common letter, e.g. <code>twone</code>. I assumed I would only
+need to account for the first word that appears in such a phrase
+(<code>two</code>), but maybe I need to account for both
+(<code>two</code>, <code>one</code>).</p>
+</div>
+<div id="proposed-solution-no.-2" class="section level2">
+<h2>Proposed Solution No. 2</h2>
+<p>Back to the drawing board. I think we can slightly modify the
+functions from the previous section to catch these edge cases.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI0lEIHRoZSBmaXJzdCBudW1lcmljIGZvciBlYWNoIGVsZW1lbnQgaW4gYSBzdHJpbmdcbm51bWJlclNlYXJjaDIgPC0gZnVuY3Rpb24oc3RybmcsIHJldmVyc2UgPSBGQUxTRSl7XG4gIHRtcCA8LSBpZiAocmV2ZXJzZSl7XG4gICAgc3VwcHJlc3NXYXJuaW5ncyhzdHJpbmdyOjpzdHJfc3BsaXRfMShzdHJuZywgXCJcIikgJT4lXG4gICAgICAgICAgICAgICAgICAgICAgIHJldiguKSAlPiVcbiAgICAgICAgICAgICAgICAgICAgICAgICAgIGFzLm51bWVyaWMoLikgJT4lICNmb3JjZSBhbGwgdmVjdG9yIGVsZW1lbnRzIHRvIG51bWVyaWNcbiAgICAgICAgICAgICAgICAgICAgICAgICAgIG5hLm9taXQoLikpICNkcm9wIGFsbCBOQXNcbiAgfSBlbHNlIHtcbiAgICBzdXBwcmVzc1dhcm5pbmdzKHN0cmluZ3I6OnN0cl9zcGxpdF8xKHN0cm5nLCBcIlwiKSAlPiVcbiAgICAgICAgICAgICAgICAgICAgICAgICAgIGFzLm51bWVyaWMoLikgJT4lICNmb3JjZSBhbGwgdmVjdG9yIGVsZW1lbnRzIHRvIG51bWVyaWNcbiAgICAgICAgICAgICAgICAgICAgICAgICAgIG5hLm9taXQoLikpICNkcm9wIGFsbCBOQXNcbiAgfVxuICAjc2hvdWxkIGJlIGxlZnQgd2l0aCBhIHZlY3RvciBvZiBudW1lcmljc1xuICB0bXBbMV1cbn1cblxuYmF0Y2hSZXBsYWNlMiA8LSBmdW5jdGlvbihzdHJuZ3Mpe1xuICAjcnVuIHRoZSB3b3JkUmVwbGFjZSByb3V0aW5lIG9uIGVhY2ggc3RyaW5nIGluIHN0cm5nc1xuICBzYXBwbHkoc3RybmdzXG4gICAgICAgICAsIEZVTiA9IGZ1bmN0aW9uKHgpe1xuICAgICAgICAgICBpbml0LndvcmQgPC0gd29yZFJlcGxhY2UoeClcbiAgICAgICAgICAgaW5pdC5udW1iZXIgPC0gbnVtYmVyU2VhcmNoMihpbml0LndvcmQpXG4gICAgICAgICAgIGxhc3Qud29yZCA8LSB3b3JkUmVwbGFjZSh4LCByZXZlcnNlID0gVFJVRSlcbiAgICAgICAgICAgbGFzdC5udW1iZXIgPC0gbnVtYmVyU2VhcmNoMihsYXN0LndvcmQsIHJldmVyc2UgPSBUUlVFKVxuICAgICAgICAgICBhcy5udW1lcmljKHBhc3RlMChpbml0Lm51bWJlcixsYXN0Lm51bWJlcikpXG4gICAgICAgICB9KVxufVxuYGBgIn0= -->
+<pre class="r"><code>#ID the first numeric for each element in a string
+numberSearch2 &lt;- function(strng, reverse = FALSE){
+  tmp &lt;- if (reverse){
+    suppressWarnings(stringr::str_split_1(strng, &quot;&quot;) %&gt;%
+                       rev(.) %&gt;%
+                           as.numeric(.) %&gt;% #force all vector elements to numeric
+                           na.omit(.)) #drop all NAs
+  } else {
+    suppressWarnings(stringr::str_split_1(strng, &quot;&quot;) %&gt;%
+                           as.numeric(.) %&gt;% #force all vector elements to numeric
+                           na.omit(.)) #drop all NAs
+  }
+  #should be left with a vector of numerics
+  tmp[1]
+}
+
+batchReplace2 &lt;- function(strngs){
+  #run the wordReplace routine on each string in strngs
+  sapply(strngs
+         , FUN = function(x){
+           init.word &lt;- wordReplace(x)
+           init.number &lt;- numberSearch2(init.word)
+           last.word &lt;- wordReplace(x, reverse = TRUE)
+           last.number &lt;- numberSearch2(last.word, reverse = TRUE)
+           as.numeric(paste0(init.number,last.number))
+         })
+}</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p>Test again on the example:</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF5MS50ZXN0MiA8LSBzYXBwbHkoZGF5MS50ZXN0JFYxXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAsIGJhdGNoUmVwbGFjZTJcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICwgVVNFLk5BTUVTID0gVFJVRSlcblxuc3VtKGRheTEudGVzdDIpXG5gYGAifQ== -->
+<pre class="r"><code>day1.test2 &lt;- sapply(day1.test$V1
+                           , batchReplace2
+                           , USE.NAMES = TRUE)
+
+sum(day1.test2)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDI4MVxuIn0= -->
+<pre><code>[1] 281</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Looks like we’re still in good shape. Let’s also run it on one of the
+edge cases:</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF5MS50ZXN0MyA8LSBzYXBwbHkoXCJ0d29uZVwiXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAsIGJhdGNoUmVwbGFjZTJcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICwgVVNFLk5BTUVTID0gVFJVRSlcblxuc3VtKGRheTEudGVzdDMpXG5gYGAifQ== -->
+<pre class="r"><code>day1.test3 &lt;- sapply(&quot;twone&quot;
+                           , batchReplace2
+                           , USE.NAMES = TRUE)
+
+sum(day1.test3)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDIxXG4ifQ== -->
+<pre><code>[1] 21</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Looking good. Now let’s run these functions on the full dataset:</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jc3RyaW5nLWFuZC1yZXBsYWNlIGZpcnN0XG5kYXkxLnN0ci5yZXBsYWNlMiA8LSBzYXBwbHkoZGF5MSRWMVxuICAgICAgICAgICAgICAgICAgICAgICAgICAgLCBiYXRjaFJlcGxhY2UyXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAsIFVTRS5OQU1FUyA9IFRSVUUpXG5cbnN1bShkYXkxLnN0ci5yZXBsYWNlMilcbmBgYCJ9 -->
+<pre class="r"><code>
+#string-and-replace first
+day1.str.replace2 &lt;- sapply(day1$V1
+                           , batchReplace2
+                           , USE.NAMES = TRUE)
+
+sum(day1.str.replace2)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDU2MzI0XG4ifQ== -->
+<pre><code>[1] 56324</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Turns out this answer is correct.</p>
 <!-- rnb-text-end -->
 </div>
+</div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkFkdmVudCBvZiBDb2RlIDIwMjM6IERheSAxIg0Kb3V0cHV0OiBodG1sX25vdGVib29rDQotLS0NCg0KIyBQYXJ0IE9uZQ0KDQpTdGFydCBieSBsb2FkaW5nIGluIG91ciBkYXRhOg0KDQpgYGB7cn0NCiNodHRwczovL2FkdmVudG9mY29kZS5jb20vMjAyMy9kYXkvMQ0KZGF5MSA8LSByZWFkLnRhYmxlKGZpbGUgPSBwYXN0ZTAoZ2V0d2QoKSwgIi9kYXRhL2RheTEudHh0IikpDQpgYGANCg0KV2Ugd2FudCB0byBjb25jYXRlbmF0ZSB0aGUgZmlyc3QtIGFuZCBsYXN0LW9ic2VydmVkIG51bWVyaWNzIGluIGVhY2ggc3RyaW5nIHRvIGVuZCB1cCB3aXRoIGEgc2luZ2xlIG51bWJlciBwZXIgcm93LCB0aGVuIHN1bSBhbGwgdGhvc2UgbnVtYmVycyB0b2dldGhlci4NCg0KUGVyIHRoZSBleGFtcGxlLCB0aGVyZSdzIGFuIGVkZ2UgY2FzZSB0byBjb25zaWRlcjogYSByb3cgc3RyaW5nIG1heSBvbmx5IGNvbnRhaW4gYSBzaW5nbGUgbnVtZXJpYy4gTm90IGEgYmlnIGRlYWwuDQoNCkknbGwgc3RhcnQgd2l0aCB0aGUgZWFzaWVzdCAocmVhZDogZHVtYmVzdCkgc29sdXRpb24gSSBjYW4gdGhpbmsgb2Y6DQoNCmBgYHtyfQ0KbGlicmFyeShzdHJpbmdyKSAjZm9yIHN0cl9zcGxpdCBmdW5jdGlvbg0KbnVtYmVycyA8LSBzYXBwbHkoZGF5MSRWMQ0KICAgICAgICAgICAgICAgICAgLCBGVU4gPSBmdW5jdGlvbih4KXsNCiAgdG1wIDwtIHN1cHByZXNzV2FybmluZ3Moc3RyaW5ncjo6c3RyX3NwbGl0XzEoeCwgIiIpICU+JQ0KICAgIGFzLm51bWVyaWMoLikgJT4lICNmb3JjZSBhbGwgdmVjdG9yIGVsZW1lbnRzIHRvIG51bWVyaWMNCiAgICBuYS5vbWl0KC4pKSAjZHJvcCBhbGwgTkFzDQogIA0KICAjc2hvdWxkIGJlIGxlZnQgd2l0aCBhIHZlY3RvciBvZiBudW1lcmljcyBub3cNCiAgI2NvbmNhdGVuYXRlIHRoZSBmaXJzdCBhbmQgbGFzdCBlbGVtZW50cyBvZiB0bXAsIA0KICAjdGhlbiBmb3JjZSB0byBudW1lcmljDQogIGFzLm51bWVyaWMocGFzdGUwKHRtcFsxXSwgdGFpbCh0bXAsMSkpKQ0KfQ0KLCBVU0UuTkFNRVMgPSBGQUxTRSkNCmBgYA0KDQpOb3cgd2UgaGF2ZSBhIHZlY3RvciBvZiBudW1iZXJzIGFuZCBzdW0gdGhlbSB1cDoNCg0KYGBge3J9DQpzdW0obnVtYmVycykNCmBgYA0KDQpBbmQgdGhpcyB0dXJuZWQgb3V0IHRvIGJlIHRoZSByaWdodCBhbnN3ZXIuIEknbGwgbGlrZWx5IGNvbWUgYmFjayBsYXRlciB0byBzZWUgaWYgSSBjYW4gY29tZSB1cCB3aXRoIGEgbW9yZSBlbGVnYW50IHNvbHV0aW9uLg0KDQojIFBhcnQgVHdvDQoNClRyaWNraWVyISBXZSBjb3VsZCBidWlsZCBhIGxvb2stdXAgdGFibGUgYW5kIHNlYXJjaCBlYWNoIHJvdyBzdHJpbmcgZm9yIG1hdGNoZXM/IFN0aWxsIG5lZWQgdG8gYWNjb3VudCBmb3Igb3JkZXIsIHdoaWNoIG1ha2VzIHRoZSBzdHJpbmcgbWF0Y2hpbmcgYSBiaXQgbW9yZSBudWFuY2VkLg0KDQpgYGB7cn0NCndyaXR0ZW4ubnVtcyA8LSBjKCJvbmUiDQogICAgICAgICAgICAgICAgICAsICJ0d28iDQogICAgICAgICAgICAgICAgICAsICJ0aHJlZSINCiAgICAgICAgICAgICAgICAgICwgImZvdXIiDQogICAgICAgICAgICAgICAgICAsICJmaXZlIg0KICAgICAgICAgICAgICAgICAgLCAic2l4Ig0KICAgICAgICAgICAgICAgICAgLCAic2V2ZW4iDQogICAgICAgICAgICAgICAgICAsICJlaWdodCINCiAgICAgICAgICAgICAgICAgICwgIm5pbmUiKQ0KYGBgDQoNCkxldCdzIHBsYXkgd2l0aCBhbiBleGFtcGxlIG9yIHR3byBmcm9tIHRoZSBwcm9tcHQuIFRoZSBzZWNvbmQgb25lIGhlcmUgaWxsdXN0cmF0ZXMgb25lIG9mIHRoZSBoYW5nLXVwczogc29tZSBzcGVsbGVkLW91dCBudW1iZXJzIG1heSBzaGFyZSBjaGFyYWN0ZXJzIChlLmcuIGB0d29uZWApDQoNCmBgYHtyfQ0KZXgxIDwtICJ0d28xbmluZSINCmV4MiA8LSAieHR3b25lM2ZvdXIiDQpgYGANCg0KTWlnaHQgYmUgZWFzaWVzdCB0byB1c2UgYGdzdWJgLCBhbHRob3VnaCBteSBzb2x1dGlvbiB3aWxsIGJlIGNsdW5reSBzaW5jZSBJIGRvbid0IGtub3cgcmVnZXg6DQoNCmBgYHtyfQ0KDQpleDEuY2hrIDwtIG1hcHBseSh3cml0dGVuLm51bXMNCiAgICAgICAsIDE6OQ0KICAgICAgICwgZXgxDQogICAgICAgLCBGVU4gPSBmdW5jdGlvbih4LCB5LCB6KXsNCiAgICAgICAgIGdzdWIoeCx5LHopDQogICAgICAgfQ0KICAgICAgICwgVVNFLk5BTUVTID0gRkFMU0UpDQoNCmV4MS5jaGsNCmBgYA0KDQpXZSBlbmQgdXAgd2l0aCBhIHN0cmluZyB2ZWN0b3Igd2UgY291bGQgdGFrZSBhZHZhbnRhZ2Ugb2Y6IGRyb3AgYWxsIGVsZW1lbnRzIHRoYXQgbWF0Y2ggdGhlIG9yaWdpbmFsIHN0cmluZywgdGhlbiBwbHVjayB0aGUgZmlyc3QgYW5kIGxhc3QgZWxlbWVudHMgZnJvbSB0aGUgcmVtYWluZGVyIHRvIG9idGFpbiB0aGUgc3RyaW5nLXRvLW51bWVyaWMgdmFsdWVzIGZvciBkb3duc3RyZWFtIHVzZS4NCg0KYGBge3J9DQpleDEuY2hrW2V4MS5jaGsgIT0gZXgxXQ0KYGBgDQoNCkluIHRoaXMgY2FzZSB0aGVyZSBhcmUgb25seSB0d28gZWxlbWVudHM7IHNlZW1zIGxpa2Ugd2UgY2FuIHVzZSBhIHJlY3Vyc2lvbiBvbiB0aGVzZSBlbGVtZW50cyB0byBmdXJ0aGVyIHNpbXBsaWZ5IHRoaW5ncywgc3RvcHBpbmcgd2hlbiB0aGUgb25seSBlbGVtZW50cyB0aGF0IHJlbWFpbiBhcmUgaWRlbnRpY2FsOg0KDQpgYGB7cn0NCiNkZWZpbmUgaGVscGVyDQpgJW5vdGluJWAgPC0gTmVnYXRlKGAlaW4lYCkNCg0KZXgxLmNoazIgPC0gc3VwcHJlc3NXYXJuaW5ncygNCiAgbWFwcGx5KHdyaXR0ZW4ubnVtcw0KICAgICAgICAgLCAxOjkNCiAgICAgICAgICwgZXgxLmNoa1tleDEuY2hrICE9IGV4MV0NCiAgICAgICAgICwgRlVOID0gZnVuY3Rpb24oeCwgeSwgeil7DQogICAgICAgICAgIGdzdWIoeCx5LHopDQogICAgICAgICB9DQogICAgICAgICAsIFVTRS5OQU1FUyA9IEZBTFNFKQ0KKQ0KDQpleDEucmVzdWx0IDwtIGV4MS5jaGsyW2V4MS5jaGsyICVub3RpbiUgZXgxLmNoa1tleDEuY2hrICE9IGV4MV1dDQpleDEucmVzdWx0W2MoMSwgbGVuZ3RoKGV4MS5yZXN1bHQpKV0NCg0KYGBgDQoNCkFuZCBmcm9tIGhlcmUgd2UgcGx1Y2sgdGhlIGZpcnN0IGFuZCBsYXN0IGNoYXJhY3RlcnMgZnJvbSB0aGUgcmVtYWluaW5nIGVsZW1lbnQsIHRoZW4gY29uY2F0ZW5hdGUuDQoNCkxldCdzIHRyeSB0aGUgb3RoZXIgZXhhbXBsZToNCg0KYGBge3J9DQoNCmBgYA0KDQo=</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkFkdmVudCBvZiBDb2RlIDIwMjM6IERheSAxIg0Kb3V0cHV0OiBodG1sX25vdGVib29rDQotLS0NCg0KIyBQYXJ0IE9uZQ0KDQpTdGFydCBieSBsb2FkaW5nIGluIG91ciBkYXRhOg0KDQpgYGB7cn0NCiNodHRwczovL2FkdmVudG9mY29kZS5jb20vMjAyMy9kYXkvMQ0KZGF5MSA8LSByZWFkLnRhYmxlKGZpbGUgPSBwYXN0ZTAoZ2V0d2QoKSwgIi9kYXRhL2RheTEudHh0IikpDQpgYGANCg0KV2Ugd2FudCB0byBjb25jYXRlbmF0ZSB0aGUgZmlyc3QtIGFuZCBsYXN0LW9ic2VydmVkIG51bWVyaWNzIGluIGVhY2ggc3RyaW5nIHRvIGVuZCB1cCB3aXRoIGEgc2luZ2xlIG51bWJlciBwZXIgcm93LCB0aGVuIHN1bSBhbGwgdGhvc2UgbnVtYmVycyB0b2dldGhlci4NCg0KUGVyIHRoZSBleGFtcGxlLCB0aGVyZSdzIGFuIGVkZ2UgY2FzZSB0byBjb25zaWRlcjogYSByb3cgc3RyaW5nIG1heSBvbmx5IGNvbnRhaW4gYSBzaW5nbGUgbnVtZXJpYy4gTm90IGEgYmlnIGRlYWwuDQoNCiMjIFByb3Bvc2VkIFNvbHV0aW9uDQoNCkknbGwgc3RhcnQgd2l0aCB0aGUgZWFzaWVzdCAocmVhZDogZHVtYmVzdCkgc29sdXRpb24gSSBjYW4gdGhpbmsgb2Y6DQoNCmBgYHtyfQ0KbGlicmFyeShzdHJpbmdyKSAjZm9yIHN0cl9zcGxpdCBmdW5jdGlvbg0KbnVtYmVycyA8LSBzYXBwbHkoZGF5MSRWMQ0KICAgICAgICAgICAgICAgICAgLCBGVU4gPSBmdW5jdGlvbih4KXsNCiAgdG1wIDwtIHN1cHByZXNzV2FybmluZ3Moc3RyaW5ncjo6c3RyX3NwbGl0XzEoeCwgIiIpICU+JQ0KICAgIGFzLm51bWVyaWMoLikgJT4lICNmb3JjZSBhbGwgdmVjdG9yIGVsZW1lbnRzIHRvIG51bWVyaWMNCiAgICBuYS5vbWl0KC4pKSAjZHJvcCBhbGwgTkFzDQogIA0KICAjc2hvdWxkIGJlIGxlZnQgd2l0aCBhIHZlY3RvciBvZiBudW1lcmljcyBub3cNCiAgI2NvbmNhdGVuYXRlIHRoZSBmaXJzdCBhbmQgbGFzdCBlbGVtZW50cyBvZiB0bXAsIA0KICAjdGhlbiBmb3JjZSB0byBudW1lcmljDQogIGFzLm51bWVyaWMocGFzdGUwKHRtcFsxXSwgdGFpbCh0bXAsMSkpKQ0KfQ0KLCBVU0UuTkFNRVMgPSBGQUxTRSkNCmBgYA0KDQpOb3cgd2UgaGF2ZSBhIHZlY3RvciBvZiBudW1iZXJzIGFuZCBzdW0gdGhlbSB1cDoNCg0KYGBge3J9DQpzdW0obnVtYmVycykNCmBgYA0KDQpBbmQgdGhpcyB0dXJuZWQgb3V0IHRvIGJlIHRoZSByaWdodCBhbnN3ZXIuIEknbGwgbGlrZWx5IGNvbWUgYmFjayB0byB0aGlzIG9uZSBsYXRlciB0byBzZWUgaWYgSSBjYW4gY29tZSB1cCB3aXRoIGEgbW9yZSBlbGVnYW50IHNvbHV0aW9uLg0KDQojIFBhcnQgVHdvDQoNClRyaWNraWVyISBXZSBjb3VsZCBidWlsZCBhIGxvb2stdXAgdGFibGUgYW5kIHNlYXJjaCBlYWNoIHJvdyBzdHJpbmcgZm9yIG1hdGNoZXM/IFN0aWxsIG5lZWQgdG8gYWNjb3VudCBmb3Igb3JkZXIsIHdoaWNoIG1ha2VzIHRoZSBzdHJpbmcgbWF0Y2hpbmcgYSBiaXQgbW9yZSBudWFuY2VkLg0KDQpgYGB7cn0NCndyaXR0ZW4ubnVtcyA8LSBjKCJvbmUiDQogICAgICAgICAgICAgICAgICAsICJ0d28iDQogICAgICAgICAgICAgICAgICAsICJ0aHJlZSINCiAgICAgICAgICAgICAgICAgICwgImZvdXIiDQogICAgICAgICAgICAgICAgICAsICJmaXZlIg0KICAgICAgICAgICAgICAgICAgLCAic2l4Ig0KICAgICAgICAgICAgICAgICAgLCAic2V2ZW4iDQogICAgICAgICAgICAgICAgICAsICJlaWdodCINCiAgICAgICAgICAgICAgICAgICwgIm5pbmUiKQ0KYGBgDQoNCiMjIFBsYXlpbmcgd2l0aCB0aGUgUHJvYmxlbQ0KDQpMZXQncyBwbGF5IHdpdGggYW4gZXhhbXBsZSBvciB0d28gZnJvbSB0aGUgcHJvbXB0LiBUaGUgc2Vjb25kIG9uZSBoZXJlIGlsbHVzdHJhdGVzIG9uZSBvZiB0aGUgaGFuZy11cHM6IHNvbWUgc3BlbGxlZC1vdXQgbnVtYmVycyBtYXkgc2hhcmUgY2hhcmFjdGVycyAoZS5nLiBgdHdvbmVgKQ0KDQpgYGB7cn0NCmV4MSA8LSAidHdvMW5pbmUiDQpleDIgPC0gInh0d29uZTNmb3VyIg0KYGBgDQoNCk1pZ2h0IGJlIGVhc2llc3QgdG8gdXNlIGBnc3ViYCwgYWx0aG91Z2ggbXkgc29sdXRpb24gd2lsbCBiZSBjbHVua3kgc2luY2UgSSBkb24ndCBrbm93IHJlZ2V4Og0KDQpgYGB7cn0NCg0KZXgxLmNoayA8LSBtYXBwbHkod3JpdHRlbi5udW1zDQogICAgICAgLCAxOjkNCiAgICAgICAsIGV4MQ0KICAgICAgICwgRlVOID0gZnVuY3Rpb24oeCwgeSwgeil7DQogICAgICAgICBnc3ViKHgseSx6KQ0KICAgICAgIH0NCiAgICAgICAsIFVTRS5OQU1FUyA9IEZBTFNFKQ0KDQpleDEuY2hrDQpgYGANCg0KV2UgZW5kIHVwIHdpdGggYSBzdHJpbmcgdmVjdG9yIHdlIGNvdWxkIHRha2UgYWR2YW50YWdlIG9mOiBkcm9wIGFsbCBlbGVtZW50cyB0aGF0IG1hdGNoIHRoZSBvcmlnaW5hbCBzdHJpbmcsIHRoZW4gcGx1Y2sgdGhlIG1vZGlmaWVkIHN0cmluZyB3aXRoIHRoZSBlYXJsaWVzdCBkZXZpYXRpb24gaW4gInNwZWxsaW5nIiBmcm9tIHRoZSBvcmlnaW5hbCBzdHJpbmcuDQoNCmBgYHtyfQ0KZXgxLmNoa1tleDEuY2hrICE9IGV4MV0NCmBgYA0KDQpJbiB0aGlzIGNhc2Ugd2UnZCBwbHVjayB0aGUgZmlyc3QgdmVjdG9yIGVsZW1lbnQsIHRoZW4gcGFzcyBvdmVyIHRoZSBzdHJpbmcgYW5kIGRldGVybWluZSB3aGV0aGVyIHRoZXJlJ3Mgc29tZSBsYXN0LW9ic2VydmVkIHdvcmQgdGhhdCBuZWVkcyByZXBsYWNpbmcgd2l0aCBpdHMgbnVtZXJpYyBzeW1ib2wuDQoNCiMjIFByb3Bvc2VkIFNvbHV0aW9uDQoNCkxldCdzIGltcGxlbWVudCB0aGlzIGFwcHJvYWNoIGluIHNvbWUgZGVmaW5lZCBmdW5jdGlvbnMgYW5kIHRoZW4gdGVzdCBpdCBvbiB0aGUgZXhhbXBsZSB2ZWN0b3Igb2Ygc3RyaW5ncyBmcm9tIHRoZSBwYXJ0IHR3byBwcm9ibGVtIHN0YXRlbWVudDoNCg0KYGBge3J9DQp3b3JkUmVwbGFjZSA8LSBmdW5jdGlvbihzdHJuZywgcmV2ZXJzZSA9IEZBTFNFKXsNCiAgDQogICN0YWtlIGEgZmlyc3QgcGFzcyBhdCByZXBsYWNpbmcgYWxsIHBvc3NpYmxlIHdvcmRzIHdpdGggdGhlaXIgbnVtZXJpYyBzeW1ib2wgZXF1aXZhbGVudA0KICB3b3JkLmxpc3QgPC0gDQogICAgc2FwcGx5KHN0cm5nLCBmdW5jdGlvbihhKSB7bWFwcGx5KHdyaXR0ZW4ubnVtcw0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAsIDE6OQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAsIGENCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgLCBGVU4gPSBmdW5jdGlvbih4LCB5LCB6KXsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBnc3ViKHgseSx6KQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICwgVVNFLk5BTUVTID0gRkFMU0UpfQ0KICAgICAgICAgICAsIHNpbXBsaWZ5ID0gRkFMU0UNCiAgICApICU+JSANCiAgICB1bmxpc3QoLikgJT4lIA0KICAgIHVuaXF1ZSguKSAjcmV0YWluIHVuaXF1ZSBzdHJpbmdzIG9ubHkNCiAgDQogIGlmIChsZW5ndGgodW5pcXVlKHdvcmQubGlzdCkpID09IDEpew0KICAgICNub3RoaW5nIGVsc2UgdG8gZG8NCiAgICByZXR1cm4odW5pcXVlKHdvcmQubGlzdCkpDQogIH0gZWxzZSB7DQogICAgI2NvbXBhcmUgZWFjaCBvZiB0aGUgbW9kaWZpZWQgc3RyaW5ncyB3aXRoIHRoZSBvcmlnaW5hbCBzdHJpbmcsDQogICAgI3RoZW4gZGV0ZXJtaW5lIHRoZSBvbmUgd2l0aCBlYXJsaWVzdCBkZXZpYXRpb24gdnMuIHRoZSBvcmlnaW5hbA0KICAgIGtlZXAgPC0gc2FwcGx5KHdvcmQubGlzdFt3b3JkLmxpc3QgJW5vdGluJSBzdHJuZ10NCiAgICAgICAgICAgICAgICAgICAsIEZVTiA9IGZ1bmN0aW9uKHgpew0KICAgICAgICAgICAgICAgICAgICAgDQogICAgICAgICAgICAgICAgICAgICB2YWwxIDwtIHN0cl9zcGxpdCh4LCAiIiwgc2ltcGxpZnkgPSBUUlVFKQ0KICAgICAgICAgICAgICAgICAgICAgdmFsMiA8LSBzdHJfc3BsaXQoc3RybmcsICIiLCBzaW1wbGlmeSA9IFRSVUUpDQogICAgICAgICAgICAgICAgICAgICANCiAgICAgICAgICAgICAgICAgICAgICN1c2UgcmV2ZXJzZSA9IFRSVUUgdG8gSUQgdGhlIG1vZGlmaWVkIHN0cmluZyB3aXRoIHRoZSBsYXN0IHBvc3NpYmxlIHdvcmQgcmVwbGFjZWQgd2l0aCBpdHMgbnVtZXJpYyBzeW1ib2wgZXF1aXZhbGVudA0KICAgICAgICAgICAgICAgICAgICAgaWYgKHJldmVyc2Upew0KICAgICAgICAgICAgICAgICAgICAgICB2YWwxIDwtIHJldih2YWwxKQ0KICAgICAgICAgICAgICAgICAgICAgICB2YWwyIDwtIHJldih2YWwyKQ0KICAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgICAgICAgDQogICAgICAgICAgICAgICAgICAgICAjZmluZCB0aGUgaW5kZXggb2YgdGhlIG1vZGlmaWVkIHN0cmluZyBlbGVtZW50IHRoYXQgZmlyc3QgZGV2aWF0ZXMgZnJvbSB0aGF0IG9mIHRoZSBvcmlnaW5hbCBzdHJpbmcNCiAgICAgICAgICAgICAgICAgICAgIGNoay5taW4gPC0gaWYobGVuZ3RoKHZhbDEpIDwgbGVuZ3RoKHZhbDIpKXsNCiAgICAgICAgICAgICAgICAgICAgICAgd2hpY2gubWluKHZhbDEgPT0gdmFsMlsxOmxlbmd0aCh2YWwxKV0pDQogICAgICAgICAgICAgICAgICAgICB9IGVsc2Ugew0KICAgICAgICAgICAgICAgICAgICAgICB3aGljaC5taW4odmFsMVsxOmxlbmd0aCh2YWwyKV0gPT0gdmFsMikNCiAgICAgICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICAgICAgIA0KICAgICAgICAgICAgICAgICAgICAgY2hrLm1pbg0KICAgICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICAgICAsIHNpbXBsaWZ5ID0gVFJVRSkNCiAgICANCiAgICAjcmV0dXJuIHRoZSBtb2RpZmllZCBzdHJpbmcgd2l0aCB0aGUgZWFybGllc3QgZGV2aWF0aW9uIGZyb20gdGhlIG9yaWdpbmFsIHN0cmluZw0KICAgIHJldHVybihuYW1lcyhrZWVwKVt3aGljaC5taW4oa2VlcCldKQ0KICB9DQp9DQoNCmJhdGNoUmVwbGFjZSA8LSBmdW5jdGlvbihzdHJuZ3Mpew0KICAjcnVuIHRoZSB3b3JkUmVwbGFjZSByb3V0aW5lIG9uIGVhY2ggc3RyaW5nIGluIHN0cm5ncw0KICBzYXBwbHkoc3RybmdzDQogICAgICAgICAsIEZVTiA9IGZ1bmN0aW9uKHgpew0KICAgICAgICAgICBpbml0LndvcmQgPC0gd29yZFJlcGxhY2UoeCkNCiAgICAgICAgICAgd29yZFJlcGxhY2UoaW5pdC53b3JkLCByZXZlcnNlID0gVFJVRSkNCiAgICAgICAgIH0pDQp9DQoNCmBgYA0KDQpMZXQncyBhbHNvIGRlZmluZSBhIGZ1bmN0aW9uIHRvIGhhbmRsZSB0aGUgaW50ZWdlci1zZWFyY2ggcm91dGluZSBmcm9tIGJlZm9yZS4NCg0KYGBge3J9DQojSUQgdGhlIGZpcnN0IGFuZCBsYXN0IG51bWVyaWNzIGZvciBlYWNoIGVsZW1lbnQgaW4gYSB2ZWN0b3Igb2Ygc3RyaW5ncywNCiN0aGVuIGNvbmNhdGVuYXRlIHRoZW0NCm51bWJlclNlYXJjaCA8LSBmdW5jdGlvbihzdHJpbmcudmVjKXsNCiAgaWYgKGFueShpcy5uYShzdHJpbmcudmVjKSkpIGJyb3dzZXIoKQ0KICBzYXBwbHkoc3RyaW5nLnZlYw0KICAgICAgICAgLCBGVU4gPSBmdW5jdGlvbih4KXsNCiAgICAgICAgICAgdG1wIDwtIHN1cHByZXNzV2FybmluZ3Moc3RyaW5ncjo6c3RyX3NwbGl0XzEoeCwgIiIpICU+JQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGFzLm51bWVyaWMoLikgJT4lICNmb3JjZSBhbGwgdmVjdG9yIGVsZW1lbnRzIHRvIG51bWVyaWMNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBuYS5vbWl0KC4pKSAjZHJvcCBhbGwgTkFzDQogICAgICAgICAgIA0KICAgICAgICAgICAjc2hvdWxkIGJlIGxlZnQgd2l0aCBhIHZlY3RvciBvZiBudW1lcmljcyBub3cNCiAgICAgICAgICAgI2NvbmNhdGVuYXRlIHRoZSBmaXJzdCBhbmQgbGFzdCBlbGVtZW50cyBvZiB0bXAsIA0KICAgICAgICAgICAjdGhlbiBmb3JjZSB0byBudW1lcmljDQogICAgICAgICAgIGFzLm51bWVyaWMocGFzdGUwKHRtcFsxXSwgdGFpbCh0bXAsMSkpKQ0KICAgICAgICAgfQ0KICApDQp9DQpgYGANCg0KTmV4dCB0ZXN0IHRoZXNlIGZ1bmN0aW9ucyBvbiB0aGUgZXhhbXBsZSBkYXRhLCBzaW5jZSB3ZSBrbm93IHdoYXQgdGhlIHJlc3VsdCBzaG91bGQgYmU6DQoNCmBgYHtyfQ0KZGF5MS50ZXN0IDwtIHJlYWQudGFibGUoZmlsZSA9IHBhc3RlMChnZXR3ZCgpLCAiL2RhdGEvZGF5MV9zYW1wbGUudHh0IikpDQoNCmRheTEudGVzdC5zdHIgPC0gc2FwcGx5KGRheTEudGVzdCRWMQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgLCBiYXRjaFJlcGxhY2UNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICwgVVNFLk5BTUVTID0gVFJVRSkNCg0Kc3VtKG51bWJlclNlYXJjaCh1bmxpc3QoZGF5MS50ZXN0LnN0cikpKQ0KYGBgDQoNCkxvb2tzIGxpa2Ugd2UncmUgaW4gZ29vZCBzaGFwZS4gTm93IGxldCdzIHJ1biB0aGVzZSBmdW5jdGlvbnMgb24gdGhlIGZ1bGwgZGF0YXNldDoNCg0KYGBge3J9DQoNCiNzdHJpbmctYW5kLXJlcGxhY2UgZmlyc3QNCmRheTEuc3RyLnJlcGxhY2UgPC0gc2FwcGx5KGRheTEkVjENCiAgICAgICAgICAgICAgICAgICAgICAgICAgICwgYmF0Y2hSZXBsYWNlDQogICAgICAgICAgICAgICAgICAgICAgICAgICAsIFVTRS5OQU1FUyA9IFRSVUUpDQoNCiNudW1iZXIgc2VhcmNoIHNlY29uZA0KZGF5MS5maW5hbC5wdDIgPC0gbnVtYmVyU2VhcmNoKHVubGlzdChkYXkxLnN0ci5yZXBsYWNlKSkNCg0Kc3VtKGRheTEuZmluYWwucHQyKQ0KYGBgDQoNClR1cm5zIG91dCB0aGlzIGFuc3dlciBpcyB3cm9uZyEgVGhlcmUgYXJlIHNvbWUgc3RyaW5ncyB3aGVyZSB3b3JkcyBzaGFyZSBhIGNvbW1vbiBsZXR0ZXIsIGUuZy4gYHR3b25lYC4gSSBhc3N1bWVkIEkgd291bGQgb25seSBuZWVkIHRvIGFjY291bnQgZm9yIHRoZSBmaXJzdCB3b3JkIHRoYXQgYXBwZWFycyBpbiBzdWNoIGEgcGhyYXNlIChgdHdvYCksIGJ1dCBtYXliZSBJIG5lZWQgdG8gYWNjb3VudCBmb3IgYm90aCAoYHR3b2AsIGBvbmVgKS4NCg0KIyMgUHJvcG9zZWQgU29sdXRpb24gTm8uIDINCg0KQmFjayB0byB0aGUgZHJhd2luZyBib2FyZC4gSSB0aGluayB3ZSBjYW4gc2xpZ2h0bHkgbW9kaWZ5IHRoZSBmdW5jdGlvbnMgZnJvbSB0aGUgcHJldmlvdXMgc2VjdGlvbiB0byBjYXRjaCB0aGVzZSBlZGdlIGNhc2VzLg0KDQpgYGB7cn0NCiNJRCB0aGUgZmlyc3QgbnVtZXJpYyBmb3IgZWFjaCBlbGVtZW50IGluIGEgc3RyaW5nDQpudW1iZXJTZWFyY2gyIDwtIGZ1bmN0aW9uKHN0cm5nLCByZXZlcnNlID0gRkFMU0Upew0KICB0bXAgPC0gaWYgKHJldmVyc2Upew0KICAgIHN1cHByZXNzV2FybmluZ3Moc3RyaW5ncjo6c3RyX3NwbGl0XzEoc3RybmcsICIiKSAlPiUNCiAgICAgICAgICAgICAgICAgICAgICAgcmV2KC4pICU+JQ0KICAgICAgICAgICAgICAgICAgICAgICAgICAgYXMubnVtZXJpYyguKSAlPiUgI2ZvcmNlIGFsbCB2ZWN0b3IgZWxlbWVudHMgdG8gbnVtZXJpYw0KICAgICAgICAgICAgICAgICAgICAgICAgICAgbmEub21pdCguKSkgI2Ryb3AgYWxsIE5Bcw0KICB9IGVsc2Ugew0KICAgIHN1cHByZXNzV2FybmluZ3Moc3RyaW5ncjo6c3RyX3NwbGl0XzEoc3RybmcsICIiKSAlPiUNCiAgICAgICAgICAgICAgICAgICAgICAgICAgIGFzLm51bWVyaWMoLikgJT4lICNmb3JjZSBhbGwgdmVjdG9yIGVsZW1lbnRzIHRvIG51bWVyaWMNCiAgICAgICAgICAgICAgICAgICAgICAgICAgIG5hLm9taXQoLikpICNkcm9wIGFsbCBOQXMNCiAgfQ0KICAjc2hvdWxkIGJlIGxlZnQgd2l0aCBhIHZlY3RvciBvZiBudW1lcmljcw0KICB0bXBbMV0NCn0NCg0KYmF0Y2hSZXBsYWNlMiA8LSBmdW5jdGlvbihzdHJuZ3Mpew0KICAjcnVuIHRoZSB3b3JkUmVwbGFjZSByb3V0aW5lIG9uIGVhY2ggc3RyaW5nIGluIHN0cm5ncw0KICBzYXBwbHkoc3RybmdzDQogICAgICAgICAsIEZVTiA9IGZ1bmN0aW9uKHgpew0KICAgICAgICAgICBpbml0LndvcmQgPC0gd29yZFJlcGxhY2UoeCkNCiAgICAgICAgICAgaW5pdC5udW1iZXIgPC0gbnVtYmVyU2VhcmNoMihpbml0LndvcmQpDQogICAgICAgICAgIGxhc3Qud29yZCA8LSB3b3JkUmVwbGFjZSh4LCByZXZlcnNlID0gVFJVRSkNCiAgICAgICAgICAgbGFzdC5udW1iZXIgPC0gbnVtYmVyU2VhcmNoMihsYXN0LndvcmQsIHJldmVyc2UgPSBUUlVFKQ0KICAgICAgICAgICBhcy5udW1lcmljKHBhc3RlMChpbml0Lm51bWJlcixsYXN0Lm51bWJlcikpDQogICAgICAgICB9KQ0KfQ0KYGBgDQoNClRlc3QgYWdhaW4gb24gdGhlIGV4YW1wbGU6DQoNCmBgYHtyfQ0KZGF5MS50ZXN0MiA8LSBzYXBwbHkoZGF5MS50ZXN0JFYxDQogICAgICAgICAgICAgICAgICAgICAgICAgICAsIGJhdGNoUmVwbGFjZTINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICwgVVNFLk5BTUVTID0gVFJVRSkNCg0Kc3VtKGRheTEudGVzdDIpDQpgYGANCg0KTG9va3MgbGlrZSB3ZSdyZSBzdGlsbCBpbiBnb29kIHNoYXBlLiBMZXQncyBhbHNvIHJ1biBpdCBvbiBvbmUgb2YgdGhlIGVkZ2UgY2FzZXM6DQoNCmBgYHtyfQ0KZGF5MS50ZXN0MyA8LSBzYXBwbHkoInR3b25lIg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgLCBiYXRjaFJlcGxhY2UyDQogICAgICAgICAgICAgICAgICAgICAgICAgICAsIFVTRS5OQU1FUyA9IFRSVUUpDQoNCnN1bShkYXkxLnRlc3QzKQ0KYGBgDQoNCkxvb2tpbmcgZ29vZC4gTm93IGxldCdzIHJ1biB0aGVzZSBmdW5jdGlvbnMgb24gdGhlIGZ1bGwgZGF0YXNldDoNCg0KYGBge3J9DQoNCiNzdHJpbmctYW5kLXJlcGxhY2UgZmlyc3QNCmRheTEuc3RyLnJlcGxhY2UyIDwtIHNhcHBseShkYXkxJFYxDQogICAgICAgICAgICAgICAgICAgICAgICAgICAsIGJhdGNoUmVwbGFjZTINCiAgICAgICAgICAgICAgICAgICAgICAgICAgICwgVVNFLk5BTUVTID0gVFJVRSkNCg0Kc3VtKGRheTEuc3RyLnJlcGxhY2UyKQ0KYGBgDQoNClR1cm5zIG91dCB0aGlzIGFuc3dlciBpcyBjb3JyZWN0Lg==</div>
 
 
 

@@ -1,20 +1,30 @@
 ---
-title: "Advent of Code 2023: Day 1"
-output: html_notebook
+title: 'Advent of Code 2023: Day 1'
+output:
+  html_document:
+    df_print: paged
 ---
+
+```{r setup, echo = FALSE}
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+```
 
 # Part One
 
 Start by loading in our data:
 
 ```{r}
-#https://adventofcode.com/2023/day/1
+
 day1 <- read.table(file = paste0(getwd(), "/data/day1.txt"))
 ```
 
 We want to concatenate the first- and last-observed numerics in each string to end up with a single number per row, then sum all those numbers together.
 
 Per the example, there's an edge case to consider: a row string may only contain a single numeric. Not a big deal.
+
+## Proposed Solution
 
 I'll start with the easiest (read: dumbest) solution I can think of:
 
@@ -40,7 +50,7 @@ Now we have a vector of numbers and sum them up:
 sum(numbers)
 ```
 
-And this turned out to be the right answer. I'll likely come back later to see if I can come up with a more elegant solution.
+And this turned out to be the right answer. I'll likely come back to this one later to see if I can come up with a more elegant solution.
 
 # Part Two
 
@@ -57,6 +67,8 @@ written.nums <- c("one"
                   , "eight"
                   , "nine")
 ```
+
+## Playing with the Problem
 
 Let's play with an example or two from the prompt. The second one here illustrates one of the hang-ups: some spelled-out numbers may share characters (e.g. `twone`)
 
@@ -80,38 +92,198 @@ ex1.chk <- mapply(written.nums
 ex1.chk
 ```
 
-We end up with a string vector we could take advantage of: drop all elements that match the original string, then pluck the first and last elements from the remainder to obtain the string-to-numeric values for downstream use.
+We end up with a string vector we could take advantage of: drop all elements that match the original string, then pluck the modified string with the earliest deviation in "spelling" from the original string.
 
 ```{r}
 ex1.chk[ex1.chk != ex1]
 ```
 
-In this case there are only two elements; seems like we can use a recursion on these elements to further simplify things, stopping when the only elements that remain are identical:
+In this case we'd pluck the first vector element, then pass over the string and determine whether there's some last-observed word that needs replacing with its numeric symbol.
+
+## Proposed Solution
+
+Let's implement this approach in some defined functions and then test it on the example vector of strings from the part two problem statement:
 
 ```{r}
-#define helper
+#helper
 `%notin%` <- Negate(`%in%`)
 
-ex1.chk2 <- suppressWarnings(
-  mapply(written.nums
-         , 1:9
-         , ex1.chk[ex1.chk != ex1]
-         , FUN = function(x, y, z){
-           gsub(x,y,z)
-         }
-         , USE.NAMES = FALSE)
-)
+wordReplace <- function(strng, reverse = FALSE){
+  
+  #take a first pass at replacing all possible words with their numeric symbol equivalent
+  word.list <- 
+    sapply(strng, function(a) {mapply(written.nums
+                                      , 1:9
+                                      , a
+                                      , FUN = function(x, y, z){
+                                        gsub(x,y,z)
+                                      }
+                                      , USE.NAMES = FALSE)}
+           , simplify = FALSE
+    ) %>% 
+    unlist(.) %>% 
+    unique(.) #retain unique strings only
+  
+  if (length(unique(word.list)) == 1){
+    #nothing else to do
+    return(unique(word.list))
+  } else {
+    #compare each of the modified strings with the original string,
+    #then determine the one with earliest deviation vs. the original
+    keep <- sapply(word.list[word.list %notin% strng]
+                   , FUN = function(x){
+                     
+                     val1 <- str_split(x, "", simplify = TRUE)
+                     val2 <- str_split(strng, "", simplify = TRUE)
+                     
+                     #use reverse = TRUE to ID the modified string with the last possible word replaced with its numeric symbol equivalent
+                     if (reverse){
+                       val1 <- rev(val1)
+                       val2 <- rev(val2)
+                     }
+                     
+                     #find the index of the modified string element that first deviates from that of the original string
+                     chk.min <- if(length(val1) < length(val2)){
+                       which.min(val1 == val2[1:length(val1)])
+                     } else {
+                       which.min(val1[1:length(val2)] == val2)
+                     }
+                     
+                     chk.min
+                   }
+                   , simplify = TRUE)
+    
+    #return the modified string with the earliest deviation from the original string
+    return(names(keep)[which.min(keep)])
+  }
+}
 
-ex1.result <- ex1.chk2[ex1.chk2 %notin% ex1.chk[ex1.chk != ex1]]
-ex1.result[c(1, length(ex1.result))]
+batchReplace <- function(strngs){
+  #run the wordReplace routine on each string in strngs
+  sapply(strngs
+         , FUN = function(x){
+           init.word <- wordReplace(x)
+           wordReplace(init.word, reverse = TRUE)
+         })
+}
 
 ```
 
-And from here we pluck the first and last characters from the remaining element, then concatenate.
+Let's also define a function to handle the integer-search routine from before.
 
-Let's try the other example:
+```{r}
+#ID the first and last numerics for each element in a vector of strings,
+#then concatenate them
+numberSearch <- function(string.vec){
+  if (any(is.na(string.vec))) browser()
+  sapply(string.vec
+         , FUN = function(x){
+           tmp <- suppressWarnings(stringr::str_split_1(x, "") %>%
+                                     as.numeric(.) %>% #force all vector elements to numeric
+                                     na.omit(.)) #drop all NAs
+           
+           #should be left with a vector of numerics now
+           #concatenate the first and last elements of tmp, 
+           #then force to numeric
+           as.numeric(paste0(tmp[1], tail(tmp,1)))
+         }
+  )
+}
+```
+
+Next test these functions on the example data, since we know what the result should be:
+
+```{r}
+day1.test <- read.table(file = paste0(getwd(), "/data/day1_sample.txt"))
+
+day1.test.str <- sapply(day1.test$V1
+                           , batchReplace
+                           , USE.NAMES = TRUE)
+
+sum(numberSearch(unlist(day1.test.str)))
+```
+
+Looks like we're in good shape. Now let's run these functions on the full dataset:
 
 ```{r}
 
+#string-and-replace first
+day1.str.replace <- sapply(day1$V1
+                           , batchReplace
+                           , USE.NAMES = TRUE)
+
+#number search second
+day1.final.pt2 <- numberSearch(unlist(day1.str.replace))
+
+sum(day1.final.pt2)
 ```
 
+Turns out this answer is wrong! There are some strings where words share a common letter, e.g. `twone`. I assumed I would only need to account for the first word that appears in such a phrase (`two`), but maybe I need to account for both (`two`, `one`).
+
+## Proposed Solution No. 2
+
+Back to the drawing board. I think we can slightly modify the functions from the previous section to catch these edge cases.
+
+```{r}
+#ID the first numeric for each element in a string
+numberSearch2 <- function(strng, reverse = FALSE){
+  tmp <- if (reverse){
+    suppressWarnings(stringr::str_split_1(strng, "") %>%
+                       rev(.) %>%
+                           as.numeric(.) %>% #force all vector elements to numeric
+                           na.omit(.)) #drop all NAs
+  } else {
+    suppressWarnings(stringr::str_split_1(strng, "") %>%
+                           as.numeric(.) %>% #force all vector elements to numeric
+                           na.omit(.)) #drop all NAs
+  }
+  #should be left with a vector of numerics
+  tmp[1]
+}
+
+batchReplace2 <- function(strngs){
+  #run the wordReplace routine on each string in strngs
+  sapply(strngs
+         , FUN = function(x){
+           init.word <- wordReplace(x)
+           init.number <- numberSearch2(init.word)
+           last.word <- wordReplace(x, reverse = TRUE)
+           last.number <- numberSearch2(last.word, reverse = TRUE)
+           as.numeric(paste0(init.number,last.number))
+         })
+}
+```
+
+Test again on the example:
+
+```{r}
+day1.test2 <- sapply(day1.test$V1
+                           , batchReplace2
+                           , USE.NAMES = TRUE)
+
+sum(day1.test2)
+```
+
+Looks like we're still in good shape. Let's also run it on one of the edge cases:
+
+```{r}
+day1.test3 <- sapply("twone"
+                           , batchReplace2
+                           , USE.NAMES = TRUE)
+
+sum(day1.test3)
+```
+
+Looking good. Now let's run these functions on the full dataset:
+
+```{r}
+
+#string-and-replace first
+day1.str.replace2 <- sapply(day1$V1
+                           , batchReplace2
+                           , USE.NAMES = TRUE)
+
+sum(day1.str.replace2)
+```
+
+Turns out this answer is correct.
