@@ -1,0 +1,109 @@
+---
+title: "Day 4"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, echo = FALSE}
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(stringr)
+
+```
+
+# Part One
+
+```{r}
+#read in ex
+day4.ex <- read.table(file = paste0(getwd(), "/data/day4_part1_sample.txt")
+                      , header = FALSE
+                      , sep = "\n"
+)
+```
+
+```{r}
+cardCleanUp <- function(v){
+  sapply(v
+         , function(x){
+           str <- gsub(".*: ", "", x)
+           crds <- str_split_1(str, " | ")
+           crds <- crds[crds != ""]
+           splt <- which(crds == "|")
+           wins <- sum(crds[(splt+1):length(crds)] %in% crds[1:(splt-1)])
+           if (wins > 0){
+             2^(wins-1)
+           } else {
+             0
+           }
+           
+           # list(winners = crds[1:(splt-1)]
+           #      , cards = crds[(splt+1):length(crds)])
+         }
+         , USE.NAMES = FALSE)
+}
+```
+
+```{r}
+sum(cardCleanUp(day4.ex$V1))
+```
+
+```{r}
+#read in full
+day4 <- read.table(file = paste0(getwd(), "/data/day4.txt")
+                      , header = FALSE
+                      , sep = "\n"
+)
+```
+
+```{r}
+sum(cardCleanUp(day4$V1))
+```
+
+## Part Two
+
+```{r}
+#this time just summing up the wins per card #
+cardNumWinCount <- function(v){
+  sapply(v
+         , function(x){
+           str <- gsub(".*: ", "", x)
+           crds <- str_split_1(str, " | ")
+           crds <- crds[crds != ""]
+           splt <- which(crds == "|")
+           sum(crds[(splt+1):length(crds)] %in% crds[1:(splt-1)])
+           # list(winners = crds[1:(splt-1)]
+           #      , cards = crds[(splt+1):length(crds)])
+         }
+         , USE.NAMES = FALSE)
+}
+
+#a for loop to handle the incrementing+summing. gross!
+winSpreader <- function(wins){
+  card.count <- rep(1, length(wins))
+
+  for (i in seq_along(wins)){
+
+    if (length(seq(i+1, length = wins[i], by = 1)) > 0){
+      card.count[seq(i+1, length = wins[i], by = 1)] <- card.count[seq(i+1, length = wins[i], by = 1)] + card.count[i]
+      
+    }
+  }
+  card.count
+}
+```
+
+```{r}
+#ex
+sum(winSpreader(cardNumWinCount(day4.ex$V1)))
+```
+
+```{r}
+#full
+sum(winSpreader(cardNumWinCount(day4$V1)))
+```
+
