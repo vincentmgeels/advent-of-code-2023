@@ -1,0 +1,88 @@
+---
+title: "Day 6"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, echo = FALSE}
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+library(dplyr)
+library(stringr)
+
+```
+
+# Part One
+
+```{r}
+#day 6 ex:
+day6.ex <- c("Time:      7  15   30"
+             , "Distance:  9  40  200")
+
+```
+
+```{r}
+#clean-up:
+cleanUp <- function(v){
+  sapply(v
+         , FUN = function(x){
+           sub(".*: ", "", x) %>%
+             str_split_1(., " ")
+         }
+         , USE.NAMES = FALSE) %>%
+    lapply(., function(x) { x[x != ""]})
+  
+}
+
+distCalc <- function(lst){
+  #time in first element
+  #record distance in second element
+
+  num.beat <- mapply(lst[[1]]
+         , lst[[2]]
+         , FUN = function(x,y){
+           tmes <- 1:as.numeric(x)
+           tme.lft <- as.numeric(x) - tmes
+           length(which((tme.lft * tmes) > as.numeric(y)))
+         })
+  
+  prod(num.beat)
+}
+
+distCalc(cleanUp(day6.ex))
+```
+
+Full:
+
+```{r}
+day6 <- c("Time:        58     99     64     69"
+          , "Distance:   478   2232   1019   1071")
+distCalc(cleanUp(day6))
+```
+
+# Part Two
+
+```{r}
+cleanUp2 <- function(v){
+  sapply(v
+         , FUN = function(x){
+           sub(".*: ", "", x) %>%
+             str_split_1(., " ") %>%
+             paste(., collapse = "")
+         }
+         , USE.NAMES = FALSE) %>%
+    lapply(., function(x) { x[x != ""]})
+  
+}
+
+distCalc(cleanUp2(day6.ex))
+```
+
+Full:
+
+```{r}
+distCalc(cleanUp2(day6))
+```
+
