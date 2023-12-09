@@ -1,0 +1,203 @@
+---
+title: "Day 7"
+output: html_notebook
+---
+
+```{r setup, echo = FALSE}
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+library(dplyr)
+library(stringr)
+
+```
+
+# Part One
+
+```{r}
+day7.ex <- read.table(file = paste0(getwd(), "/data/day7_part1_sample.txt")
+                      , header = FALSE
+                      , sep = "\n"
+)
+```
+
+```{r}
+cleanUp <- function(v){
+  chk <- sapply(v
+         , FUN = function(x){
+           str_split_1(x, " ")
+         }
+         , USE.NAMES = FALSE)
+
+  #chk is a matrix w/ 1st row hands, 2nd row bet values
+  chk[1,] <- sapply(chk[1, ]
+         , FUN = function(x){
+           #make it easier to sort hands
+           x <- gsub("A", "Z", x)
+           x <- gsub("K", "Y", x)
+           x <- gsub("Q", "X", x)
+           x <- gsub("J", "W", x)
+         })
+  
+  chk
+}
+
+handValues <- function(m){
+  
+  rnks <- sapply(m[1, ]
+         , FUN = function(x){
+           #ranks 1-7
+           tab <- table(str_split_1(x, ""))
+           rnk <- length(tab)
+           if (rnk == 5){
+             rnk <- 7
+           } else if (rnk == 4){
+             rnk <- 6
+           } else if (rnk == 3){
+             if (sum(tab == 2)){
+               rnk <- 5
+             } else {
+               rnk <- 4
+             }
+           } else if (rnk == 2){
+             if (min(tab) == 2){
+               rnk <- 3
+             }
+           }
+           rnk
+         }
+         )
+
+  data.frame(hand = m[1, ]
+                   , bet = m[2, ]
+                   , rank = rnks) %>%
+    dplyr::arrange(-rank, hand)
+}
+
+```
+
+```{r}
+day7.smpl <- cleanUp(day7.ex$V1)
+day7.smpl.hands <- handValues(day7.smpl)
+sum(as.numeric(day7.smpl.hands$bet) * 1:nrow(day7.smpl.hands))
+```
+
+Full:
+
+```{r}
+day7 <- read.table(file = paste0(getwd(), "/data/day7.txt")
+                      , header = FALSE
+                      , sep = "\n"
+)
+```
+
+```{r}
+day7.hands <- cleanUp(day7$V1) %>%
+ handValues(.)
+sum(as.numeric(day7.hands$bet) * 1:nrow(day7.hands))
+```
+
+# Part Two
+
+```{r}
+cleanUp2 <- function(v){
+  chk <- sapply(v
+         , FUN = function(x){
+           str_split_1(x, " ")
+         }
+         , USE.NAMES = FALSE)
+
+  #chk is a matrix w/ 1st row hands, 2nd row bet values
+  chk[1,] <- sapply(chk[1, ]
+         , FUN = function(x){
+           #make it easier to sort hands
+           x <- gsub("A", "Z", x)
+           x <- gsub("K", "Y", x)
+           x <- gsub("Q", "X", x)
+           x <- gsub("J", "1", x)
+         })
+  
+  chk
+}
+
+handValues2 <- function(m){
+
+  df <- data.frame(hand = m[1, ]
+                   , bet = m[2, ]) %>%
+    dplyr::mutate(sub_hand = 
+                    sapply(hand
+                           , function(x) subHand(x)))
+
+  rnks <- sapply(df$sub_hand
+                 , FUN = function(x){
+                   #ranks 1-7
+                   tab <- table(str_split_1(x, ""))
+                   rnk <- length(tab)
+                   if (rnk == 5){
+                     rnk <- 7
+                   } else if (rnk == 4){
+                     rnk <- 6
+                   } else if (rnk == 3){
+                     if (sum(tab == 2)){
+                       rnk <- 5
+                     } else {
+                       rnk <- 4
+                     }
+                   } else if (rnk == 2){
+                     if (min(tab) == 2){
+                       rnk <- 3
+                     }
+                   }
+                   rnk
+                 }
+  )
+  
+  df %>%
+    dplyr::mutate(rank = rnks) %>%
+    dplyr::arrange(-rank, hand)
+}
+
+subHand <- function(s){
+  o <- str_split_1(s, "")
+  counts <- table(o[o != "1"])
+  if (length(counts) == 0){
+    s #all Js (aka 1s)
+  } else if (max(counts) == 1){
+    gsub("1", max(o), s)
+  } else {
+    max.card <- which(counts == max(counts)) %>% 
+      attr(., "names") %>% 
+      max(.)
+
+    gsub("1", max.card, s)
+  }
+}
+
+handRev <- function(v){
+  sapply(v
+         ,
+  FUN = function(x){
+           #make it easier to sort hands
+           x <- gsub("Z", "A", x)
+           x <- gsub("Y", "K", x)
+           x <- gsub("X", "Q", x)
+           x <- gsub("1", "J", x)
+         })
+}
+```
+
+```{r}
+day7.ex.hands <- cleanUp2(day7.ex$V1) %>%
+ handValues2(.)
+sum(as.numeric(day7.ex.hands$bet) * 1:nrow(day7.ex.hands))
+```
+
+Full:
+
+```{r}
+day7.hands <- cleanUp2(day7$V1) %>%
+ handValues2(.)
+sum(as.numeric(day7.hands$bet) * 1:nrow(day7.hands))
+```
+
+
